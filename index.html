@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+       <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -15,14 +15,16 @@
             background-color: #0f172a;
             color: white;
         }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
         .sidebar { width: 260px; transition: all 0.3s ease; }
         #preview-frame { background: white; width: 100%; height: 100%; border: none; border-radius: 8px; }
-        pre { tab-size: 2; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
-        /* Hide scrollbar but allow scrolling */
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* চ্যাট বক্সের কাস্টম স্টাইল */
+        #user-prompt {
+            min-height: 48px;
+            max-height: 250px;
+            resize: vertical; /* ইউজার নিজে টেনে বড় করতে পারবে */
+        }
     </style>
 </head>
 <body>
@@ -35,8 +37,7 @@
                 </button>
             </div>
             
-            <div id="project-list" class="flex-1 overflow-y-auto px-2 space-y-1 no-scrollbar">
-                </div>
+            <div id="project-list" class="flex-1 overflow-y-auto px-2 space-y-1 no-scrollbar"></div>
 
             <div class="p-4 border-t border-slate-700">
                 <button onclick="toggleModal('settings-modal')" class="flex items-center gap-3 text-slate-400 hover:text-white transition w-full">
@@ -49,9 +50,9 @@
         <main class="flex-1 flex flex-col min-w-0">
             <header class="h-14 border-b border-slate-700 flex items-center justify-between px-4 bg-slate-900">
                 <div class="flex gap-2">
-                    <div class="dot bg-red-500"></div>
-                    <div class="dot bg-yellow-500"></div>
-                    <div class="dot bg-green-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
                 </div>
 
                 <div class="flex bg-slate-800 rounded-lg p-1">
@@ -81,192 +82,100 @@
             </div>
 
             <footer class="p-4 bg-slate-900 border-t border-slate-700 flex-shrink-0">
-                <div class="max-w-4xl mx-auto flex gap-3">
-                    <textarea id="user-prompt" rows="1" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-white" placeholder="Describe the website you want to build..."></textarea>
-                    <button onclick="generateWebpage()" class="bg-blue-600 hover:bg-blue-500 w-12 h-12 rounded-xl flex items-center justify-center transition flex-shrink-0">
+                <div class="max-w-4xl mx-auto flex items-end gap-3">
+                    <textarea 
+                        id="user-prompt" 
+                        oninput="autoResize(this)"
+                        class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" 
+                        placeholder="আপনার ওয়েবসাইটের আইডিয়া লিখুন..."></textarea>
+                    <button onclick="generateWebpage()" class="bg-blue-600 hover:bg-blue-500 w-12 h-12 rounded-xl flex items-center justify-center transition flex-shrink-0 mb-[2px]">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+                <p class="text-[10px] text-center text-slate-500 mt-2">বক্সটি বড় করতে নিচের ডান কোণায় টেনে ধরুন</p>
             </footer>
         </main>
     </div>
 
     <div id="settings-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 rounded-2xl w-full max-w-md p-6 border border-slate-700 shadow-2xl">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-md p-6 border border-slate-700">
             <h2 class="text-xl font-bold mb-6">Configuration</h2>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">API Endpoint</label>
-                    <input id="setting-url" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">API Key</label>
-                    <input id="setting-key" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-blue-500" placeholder="sk-or-...">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Model ID</label>
-                    <input id="setting-model" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-blue-500">
-                </div>
+                <input id="setting-url" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2" placeholder="API URL">
+                <input id="setting-key" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2" placeholder="API Key">
+                <input id="setting-model" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2" placeholder="Model ID">
             </div>
             <div class="mt-8 flex justify-end gap-3">
-                <button onclick="toggleModal('settings-modal')" class="px-4 py-2 text-slate-400 hover:text-white">Cancel</button>
-                <button onclick="saveSettings()" class="bg-blue-600 px-6 py-2 rounded-lg font-bold">Save Settings</button>
+                <button onclick="toggleModal('settings-modal')" class="px-4 py-2 text-slate-400">Cancel</button>
+                <button onclick="saveSettings()" class="bg-blue-600 px-6 py-2 rounded-lg font-bold">Save</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONSTANTS ---
-        const SYSTEM_PROMPT = "You are an expert web developer. Output ONLY raw, functional HTML code including Tailwind CSS via CDN. Do not include explanations, markdown code blocks (```), or any text other than the code itself.";
+        const SYSTEM_PROMPT = "You are a web developer. Output ONLY raw HTML code including Tailwind CSS. No markdown, no talk.";
         
-        // --- STATE MANAGEMENT ---
         let projects = JSON.parse(localStorage.getItem('projects') || '[]');
         let currentProjectId = null;
         let config = JSON.parse(localStorage.getItem('config') || JSON.stringify({
-            url: "[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)",
+            url: "https://openrouter.ai/api/v1/chat/completions",
             key: "",
             model: "deepseek/deepseek-r1:free"
         }));
 
-        // --- INITIALIZATION ---
         window.onload = () => {
             loadSettingsInputs();
             renderProjectList();
-            if (projects.length > 0) {
-                loadProject(projects[0].id);
-            }
+            if (projects.length > 0) loadProject(projects[0].id);
         };
 
-        function loadSettingsInputs() {
-            document.getElementById('setting-url').value = config.url;
-            document.getElementById('setting-key').value = config.key;
-            document.getElementById('setting-model').value = config.model;
+        // অটো-রিসাইজ ফাংশন
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
         }
 
-        // --- CORE FUNCTIONS ---
         async function generateWebpage() {
             const promptInput = document.getElementById('user-prompt');
             const prompt = promptInput.value.trim();
-            if (!prompt) return;
-            if (!config.key) return alert("Please set your API Key in Settings!");
+            if (!prompt || !config.key) return alert("প্রম্পট লিখুন এবং API Key চেক করুন!");
 
             setLoading(true);
-
             try {
                 const response = await fetch(config.url, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${config.key}`,
-                        'Content-Type': 'application/json',
-                        'HTTP-Referer': window.location.origin,
-                        'X-Title': 'AI Web Builder'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         model: config.model,
-                        messages: [
-                            { role: "system", content: SYSTEM_PROMPT },
-                            { role: "user", content: prompt }
-                        ]
+                        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }]
                     })
                 });
 
-                // ANTI-CRASH LOGIC
-                const rawText = await response.text();
-                
-                if (!response.ok) {
-                    alert("API Error: " + rawText);
-                    setLoading(false);
-                    return;
-                }
+                const text = await response.text();
+                if (!response.ok) throw new Error(text);
 
-                const data = JSON.parse(rawText);
-                let code = data.choices[0].message.content;
-
-                // Clean potential markdown wrap
-                code = code.replace(/```html/g, "").replace(/```/g, "").trim();
+                const data = JSON.parse(text);
+                const code = data.choices[0].message.content.replace(/```html|```/g, "").trim();
 
                 updateCurrentProject(prompt, code);
                 promptInput.value = "";
+                promptInput.style.height = '48px'; // রিসেট হাইট
                 
             } catch (err) {
-                alert("Critical Error: " + err.message);
+                alert("API Error: " + err.message);
             } finally {
                 setLoading(false);
             }
         }
 
-        function updateCurrentProject(prompt, code) {
-            if (!currentProjectId) {
-                const newProj = {
-                    id: Date.now(),
-                    name: prompt.substring(0, 25) + "...",
-                    code: code
-                };
-                projects.unshift(newProj);
-                currentProjectId = newProj.id;
-            } else {
-                const idx = projects.findIndex(p => p.id === currentProjectId);
-                projects[idx].code = code;
-            }
-            
-            saveToStorage();
-            renderProjectList();
-            displayCode(code);
-        }
-
-        function createNewProject() {
-            currentProjectId = null;
-            document.getElementById('user-prompt').value = "";
-            displayCode("<!DOCTYPE html><html><body class='bg-slate-900 flex items-center justify-center h-screen'><h1 class='text-white text-2xl'>Start your next project...</h1></body></html>");
-        }
-
-        function displayCode(code) {
-            const iframe = document.getElementById('preview-frame');
-            iframe.srcdoc = code;
-            document.getElementById('code-editor').value = code;
-        }
-
-        function renderProjectList() {
-            const list = document.getElementById('project-list');
-            list.innerHTML = projects.map(p => `
-                <div onclick="loadProject(${p.id})" class="group flex items-center justify-between p-3 rounded-lg cursor-pointer transition ${currentProjectId === p.id ? 'bg-blue-600/20 border border-blue-500/50' : 'hover:bg-slate-800'}">
-                    <span class="text-sm truncate pr-2 ${currentProjectId === p.id ? 'text-blue-400' : 'text-slate-300'}">${p.name}</span>
-                    <i onclick="deleteProject(event, ${p.id})" class="fas fa-trash text-slate-600 hover:text-red-500 text-xs"></i>
-                </div>
-            `).join('');
-        }
-
-        function loadProject(id) {
-            currentProjectId = id;
-            const proj = projects.find(p => p.id === id);
-            if (proj) {
-                displayCode(proj.code);
-                renderProjectList();
-            }
-        }
-
-        function deleteProject(e, id) {
-            e.stopPropagation();
-            projects = projects.filter(p => p.id !== id);
-            if (currentProjectId === id) currentProjectId = null;
-            saveToStorage();
-            renderProjectList();
-            if (projects.length > 0) loadProject(projects[0].id);
-        }
-
-        // --- UTILS ---
-        function setView(view) {
-            const isPreview = view === 'preview';
-            document.getElementById('preview-container').classList.toggle('hidden', !isPreview);
-            document.getElementById('code-container').classList.toggle('hidden', isPreview);
-            
-            document.getElementById('view-preview').classList.toggle('bg-blue-600', isPreview);
-            document.getElementById('view-code').classList.toggle('bg-blue-600', !isPreview);
-        }
-
-        function toggleModal(id) {
-            const el = document.getElementById(id);
-            el.classList.toggle('hidden');
+        // --- অন্যান্য লজিক আগের মতোই থাকবে ---
+        function loadSettingsInputs() {
+            document.getElementById('setting-url').value = config.url;
+            document.getElementById('setting-key').value = config.key;
+            document.getElementById('setting-model').value = config.model;
         }
 
         function saveSettings() {
@@ -277,24 +186,60 @@
             toggleModal('settings-modal');
         }
 
-        function saveToStorage() {
-            localStorage.setItem('projects', JSON.stringify(projects));
+        function updateCurrentProject(prompt, code) {
+            if (!currentProjectId) {
+                const newProj = { id: Date.now(), name: prompt.substring(0, 20), code: code };
+                projects.unshift(newProj);
+                currentProjectId = newProj.id;
+            } else {
+                const idx = projects.findIndex(p => p.id === currentProjectId);
+                projects[idx].code = code;
+            }
+            saveToStorage();
+            renderProjectList();
+            displayCode(code);
         }
 
-        function setLoading(isLoading) {
-            document.getElementById('loader').classList.toggle('hidden', !isLoading);
+        function displayCode(code) {
+            document.getElementById('preview-frame').srcdoc = code;
+            document.getElementById('code-editor').value = code;
         }
 
+        function renderProjectList() {
+            document.getElementById('project-list').innerHTML = projects.map(p => `
+                <div onclick="loadProject(${p.id})" class="p-3 rounded-lg cursor-pointer mb-1 ${currentProjectId === p.id ? 'bg-blue-600/20 border border-blue-500/50' : 'hover:bg-slate-800'}">
+                    <span class="text-sm truncate block">${p.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function loadProject(id) {
+            currentProjectId = id;
+            const proj = projects.find(p => p.id === id);
+            if (proj) displayCode(proj.code);
+            renderProjectList();
+        }
+
+        function setView(view) {
+            const isPreview = view === 'preview';
+            document.getElementById('preview-container').classList.toggle('hidden', !isPreview);
+            document.getElementById('code-container').classList.toggle('hidden', isPreview);
+            document.getElementById('view-preview').classList.toggle('bg-blue-600', isPreview);
+            document.getElementById('view-code').classList.toggle('bg-blue-600', !isPreview);
+        }
+
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function saveToStorage() { localStorage.setItem('projects', JSON.stringify(projects)); }
+        function setLoading(s) { document.getElementById('loader').classList.toggle('hidden', !s); }
+        function createNewProject() { currentProjectId = null; displayCode(''); }
         function downloadCode() {
             const code = document.getElementById('code-editor').value;
-            if (!code) return;
             const blob = new Blob([code], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `website-${Date.now()}.html`;
+            a.href = URL.createObjectURL(blob);
+            a.download = 'index.html';
             a.click();
         }
     </script>
 </body>
-</html>
+</html>    
