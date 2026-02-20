@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Website Builder Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            min-height: 100dvh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            background-color: #0f172a;
+            color: white;
+        }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+        .sidebar { width: 260px; transition: all 0.3s ease; }
+        #preview-frame { background: white; width: 100%; height: 100%; border: none; border-radius: 8px; }
+        pre { tab-size: 2; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        /* Hide scrollbar but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="sidebar flex flex-col border-r border-slate-700 bg-slate-900">
+            <div class="p-4">
+                <button onclick="createNewProject()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition">
+                    <i class="fas fa-plus"></i> New Project
+                </button>
+            </div>
+            
+            <div id="project-list" class="flex-1 overflow-y-auto px-2 space-y-1 no-scrollbar">
+                </div>
+
+            <div class="p-4 border-t border-slate-700">
+                <button onclick="toggleModal('settings-modal')" class="flex items-center gap-3 text-slate-400 hover:text-white transition w-full">
+                    <i class="fas fa-cog text-xl"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0">
+            <header class="h-14 border-b border-slate-700 flex items-center justify-between px-4 bg-slate-900">
+                <div class="flex gap-2">
+                    <div class="dot bg-red-500"></div>
+                    <div class="dot bg-yellow-500"></div>
+                    <div class="dot bg-green-500"></div>
+                </div>
+
+                <div class="flex bg-slate-800 rounded-lg p-1">
+                    <button id="view-preview" onclick="setView('preview')" class="px-4 py-1 rounded-md bg-blue-600 text-sm font-medium">Preview</button>
+                    <button id="view-code" onclick="setView('code')" class="px-4 py-1 rounded-md text-sm font-medium hover:bg-slate-700">Code</button>
+                </div>
+
+                <button onclick="downloadCode()" class="text-slate-300 hover:text-white p-2">
+                    <i class="fas fa-download"></i>
+                </button>
+            </header>
+
+            <div class="flex-1 relative p-4 bg-slate-950 overflow-hidden">
+                <div id="preview-container" class="h-full">
+                    <iframe id="preview-frame"></iframe>
+                </div>
+                <div id="code-container" class="h-full hidden">
+                    <textarea id="code-editor" class="w-full h-full bg-slate-900 text-green-400 p-4 font-mono text-sm rounded-lg border border-slate-700 outline-none" readonly></textarea>
+                </div>
+                
+                <div id="loader" class="absolute inset-0 bg-slate-900/80 flex items-center justify-center hidden">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                        <p class="text-blue-400 font-medium">AI is coding...</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="p-4 bg-slate-900 border-t border-slate-700 flex-shrink-0">
+                <div class="max-w-4xl mx-auto flex gap-3">
+                    <textarea id="user-prompt" rows="1" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-white" placeholder="Describe the website you want to build..."></textarea>
+                    <button onclick="generateWebpage()" class="bg-blue-600 hover:bg-blue-500 w-12 h-12 rounded-xl flex items-center justify-center transition flex-shrink-0">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-md p-6 border border-slate-700 shadow-2xl">
+            <h2 class="text-xl font-bold mb-6">Configuration</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">API Endpoint</label>
+                    <input id="setting-url" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">API Key</label>
+                    <input id="setting-key" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-blue-500" placeholder="sk-or-...">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Model ID</label>
+                    <input id="setting-model" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-3">
+                <button onclick="toggleModal('settings-modal')" class="px-4 py-2 text-slate-400 hover:text-white">Cancel</button>
+                <button onclick="saveSettings()" class="bg-blue-600 px-6 py-2 rounded-lg font-bold">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTS ---
+        const SYSTEM_PROMPT = "You are an expert web developer. Output ONLY raw, functional HTML code including Tailwind CSS via CDN. Do not include explanations, markdown code blocks (```), or any text other than the code itself.";
+        
+        // --- STATE MANAGEMENT ---
+        let projects = JSON.parse(localStorage.getItem('projects') || '[]');
+        let currentProjectId = null;
+        let config = JSON.parse(localStorage.getItem('config') || JSON.stringify({
+            url: "[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)",
+            key: "",
+            model: "deepseek/deepseek-r1:free"
+        }));
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            loadSettingsInputs();
+            renderProjectList();
+            if (projects.length > 0) {
+                loadProject(projects[0].id);
+            }
+        };
+
+        function loadSettingsInputs() {
+            document.getElementById('setting-url').value = config.url;
+            document.getElementById('setting-key').value = config.key;
+            document.getElementById('setting-model').value = config.model;
+        }
+
+        // --- CORE FUNCTIONS ---
+        async function generateWebpage() {
+            const promptInput = document.getElementById('user-prompt');
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+            if (!config.key) return alert("Please set your API Key in Settings!");
+
+            setLoading(true);
+
+            try {
+                const response = await fetch(config.url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${config.key}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': window.location.origin,
+                        'X-Title': 'AI Web Builder'
+                    },
+                    body: JSON.stringify({
+                        model: config.model,
+                        messages: [
+                            { role: "system", content: SYSTEM_PROMPT },
+                            { role: "user", content: prompt }
+                        ]
+                    })
+                });
+
+                // ANTI-CRASH LOGIC
+                const rawText = await response.text();
+                
+                if (!response.ok) {
+                    alert("API Error: " + rawText);
+                    setLoading(false);
+                    return;
+                }
+
+                const data = JSON.parse(rawText);
+                let code = data.choices[0].message.content;
+
+                // Clean potential markdown wrap
+                code = code.replace(/```html/g, "").replace(/```/g, "").trim();
+
+                updateCurrentProject(prompt, code);
+                promptInput.value = "";
+                
+            } catch (err) {
+                alert("Critical Error: " + err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function updateCurrentProject(prompt, code) {
+            if (!currentProjectId) {
+                const newProj = {
+                    id: Date.now(),
+                    name: prompt.substring(0, 25) + "...",
+                    code: code
+                };
+                projects.unshift(newProj);
+                currentProjectId = newProj.id;
+            } else {
+                const idx = projects.findIndex(p => p.id === currentProjectId);
+                projects[idx].code = code;
+            }
+            
+            saveToStorage();
+            renderProjectList();
+            displayCode(code);
+        }
+
+        function createNewProject() {
+            currentProjectId = null;
+            document.getElementById('user-prompt').value = "";
+            displayCode("<!DOCTYPE html><html><body class='bg-slate-900 flex items-center justify-center h-screen'><h1 class='text-white text-2xl'>Start your next project...</h1></body></html>");
+        }
+
+        function displayCode(code) {
+            const iframe = document.getElementById('preview-frame');
+            iframe.srcdoc = code;
+            document.getElementById('code-editor').value = code;
+        }
+
+        function renderProjectList() {
+            const list = document.getElementById('project-list');
+            list.innerHTML = projects.map(p => `
+                <div onclick="loadProject(${p.id})" class="group flex items-center justify-between p-3 rounded-lg cursor-pointer transition ${currentProjectId === p.id ? 'bg-blue-600/20 border border-blue-500/50' : 'hover:bg-slate-800'}">
+                    <span class="text-sm truncate pr-2 ${currentProjectId === p.id ? 'text-blue-400' : 'text-slate-300'}">${p.name}</span>
+                    <i onclick="deleteProject(event, ${p.id})" class="fas fa-trash text-slate-600 hover:text-red-500 text-xs"></i>
+                </div>
+            `).join('');
+        }
+
+        function loadProject(id) {
+            currentProjectId = id;
+            const proj = projects.find(p => p.id === id);
+            if (proj) {
+                displayCode(proj.code);
+                renderProjectList();
+            }
+        }
+
+        function deleteProject(e, id) {
+            e.stopPropagation();
+            projects = projects.filter(p => p.id !== id);
+            if (currentProjectId === id) currentProjectId = null;
+            saveToStorage();
+            renderProjectList();
+            if (projects.length > 0) loadProject(projects[0].id);
+        }
+
+        // --- UTILS ---
+        function setView(view) {
+            const isPreview = view === 'preview';
+            document.getElementById('preview-container').classList.toggle('hidden', !isPreview);
+            document.getElementById('code-container').classList.toggle('hidden', isPreview);
+            
+            document.getElementById('view-preview').classList.toggle('bg-blue-600', isPreview);
+            document.getElementById('view-code').classList.toggle('bg-blue-600', !isPreview);
+        }
+
+        function toggleModal(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        function saveSettings() {
+            config.url = document.getElementById('setting-url').value;
+            config.key = document.getElementById('setting-key').value;
+            config.model = document.getElementById('setting-model').value;
+            localStorage.setItem('config', JSON.stringify(config));
+            toggleModal('settings-modal');
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('projects', JSON.stringify(projects));
+        }
+
+        function setLoading(isLoading) {
+            document.getElementById('loader').classList.toggle('hidden', !isLoading);
+        }
+
+        function downloadCode() {
+            const code = document.getElementById('code-editor').value;
+            if (!code) return;
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `website-${Date.now()}.html`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
